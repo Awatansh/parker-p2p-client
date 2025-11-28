@@ -10,26 +10,19 @@ export default function PeerManager() {
 
   async function init() {
     return new Promise((resolve, reject) => {
-      const peerServerUrl = process.env.REACT_APP_PEER_SERVER || undefined;
-      const options = {};
+      // Production config with environment variables
+      const peerConfig = {
+        host: process.env.REACT_APP_PEER_HOST || "parker-app.onrender.com",
+        port: parseInt(process.env.REACT_APP_PEER_PORT || "443"),
+        path: process.env.REACT_APP_PEER_PATH || "/peer",
+        secure: process.env.REACT_APP_PEER_SECURE === "true" || true,
+        debug: 2,
+      };
 
-      console.log("[PeerManager] Initializing with serverUrl:", peerServerUrl);
-      console.log("[PeerManager] Peer config:", options);
+      console.log("[PeerManager] Initializing with config:", peerConfig);
+      console.log("[PeerManager] Environment:", process.env.NODE_ENV);
 
-      if (peerServerUrl) {
-        // PeerJS client uses host/path format when connecting to a custom server.
-        const url = new URL(peerServerUrl);
-        options.host = url.hostname;
-        options.port = url.port || undefined;
-        options.path = url.pathname;
-        // force secure for https
-        options.secure = url.protocol === "https:";
-        console.log("[PeerManager] Using custom peer server:", options);
-      } else {
-        console.log("[PeerManager] Using default PeerJS cloud server");
-      }
-
-      peer = new Peer(undefined, options);
+      peer = new Peer(undefined, peerConfig);
 
       peer.on("open", id => {
         console.log("[PeerManager] Peer open:", id);

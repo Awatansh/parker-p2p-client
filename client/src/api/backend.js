@@ -1,6 +1,9 @@
 import axios from "axios";
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const API_BASE =
+  process.env.NODE_ENV === "production"
+    ? process.env.REACT_APP_API_URL || "https://parker-app.onrender.com/api"
+    : "http://localhost:5000/api";
 
 console.log("[API] Initializing with base URL:", API_BASE);
 
