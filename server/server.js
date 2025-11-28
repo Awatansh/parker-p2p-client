@@ -27,10 +27,15 @@ const PORT = process.env.PORT || 5000;
   const server = http.createServer(app);
 
   // mount PeerJS signaling server on the same HTTP server
-  // ExpressPeerServer auto-handles the /peer path
   const peerServer = createPeerServer(server, {
     path: process.env.PEER_PATH || "/peer",
     debug: !!process.env.PEER_DEBUG
+  });
+
+  // Handle WebSocket upgrade events for PeerServer
+  server.on("upgrade", (request, socket, head) => {
+    console.log("[Server] WebSocket upgrade request for:", request.url);
+    peerServer.handleUpgrade(request, socket, head);
   });
 
   server.listen(PORT, () => {
