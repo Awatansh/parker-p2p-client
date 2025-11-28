@@ -18,17 +18,15 @@ app.use("/api/peers", peerRoutes);
 // health check
 app.get("/health", (req, res) => res.json({ ok: true }));
 
-// Serve React static files (must come after API routes)
+// PeerServer middleware will be added here in server.js before static files
+// (This prevents SPA fallback from intercepting /peer routes)
+
+// Serve React static files
 const clientBuildPath = path.join(__dirname, "../client/build");
 app.use(express.static(clientBuildPath));
 
 // Fallback: serve index.html for all other routes (SPA support)
-// CRITICAL: exclude /peer paths - those are handled by PeerServer
 app.get("*", (req, res) => {
-  // Don't serve index.html for /peer/* routes
-  if (req.path.startsWith("/peer")) {
-    return res.status(404).json({ error: "Not found" });
-  }
   res.sendFile(path.join(clientBuildPath, "index.html"));
 });
 

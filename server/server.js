@@ -25,14 +25,17 @@ const PORT = process.env.PORT || 5000;
   // create HTTP server
   const server = http.createServer();
 
-  // mount PeerJS signaling server FIRST (before Express app)
+  // mount PeerJS signaling server on HTTP server
   const peerServer = createPeerServer(server, {
     path: process.env.PEER_PATH || "/peer",
     debug: !!process.env.PEER_DEBUG
   });
 
-  // NOW load Express app (which includes static files and SPA fallback)
+  // Load Express app and attach PeerServer as middleware
   const app = require("./app");
+  app.use(peerServer);
+  
+  // attach Express app to HTTP server
   server.on("request", app);
 
   server.listen(PORT, () => {
