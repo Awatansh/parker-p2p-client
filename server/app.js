@@ -1,6 +1,7 @@
 // server/app.js
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const peerRoutes = require("./routes/peerRoutes");
 const errorHandler = require("./middleware/errorHandler");
 const rateLimiter = require("./middleware/rateLimiter");
@@ -16,6 +17,15 @@ app.use("/api/peers", peerRoutes);
 
 // health
 app.get("/health", (req, res) => res.json({ ok: true }));
+
+// Serve React static files (must come after API routes)
+const clientBuildPath = path.join(__dirname, "../client/build");
+app.use(express.static(clientBuildPath));
+
+// Fallback: serve index.html for all other routes (SPA support)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(clientBuildPath, "index.html"));
+});
 
 // error handler last
 app.use(errorHandler);
