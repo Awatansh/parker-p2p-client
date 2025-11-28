@@ -1,6 +1,5 @@
 require("dotenv").config();
 const http = require("http");
-const app = require("./app");
 const connectDB = require("./config/db");
 const { ExpressPeerServer } = require("peer");
 
@@ -23,16 +22,18 @@ const PORT = process.env.PORT || 5000;
     process.exit(1);
   }
 
-  // create HTTP server from express app
-  const server = http.createServer(app);
+  // Create HTTP server (we'll add Express to it in a moment)
+  const server = http.createServer();
 
-  // mount PeerJS signaling server directly on HTTP server
-  // ExpressPeerServer handles both HTTP and WebSocket on the specified path
+  // Create and configure PeerServer first
+  const peerPath = process.env.PEER_PATH || "/peer";
+  console.log("[Server] Setting up PeerJS at path: " + peerPath);
+
   const peerServer = ExpressPeerServer(server, {
-    path: process.env.PEER_PATH || "/peer",
+    path: peerPath,
     debug: !!process.env.PEER_DEBUG,
     allow_discovery: true,
-    proxied: true, // Critical for Render (behind reverse proxy)
+    proxied: true,
     cors: {
       origin: true,
       credentials: true,
@@ -43,16 +44,31 @@ const PORT = process.env.PORT || 5000;
 
   // Log peer events
   peerServer.on("connection", (client) => {
-    console.log(`[PeerServer] Peer connected: ${client.getId()}`);
+    console.log(`[PeerServer] ✅ Peer connected: ${client.getId()}`);
   });
 
   peerServer.on("disconnect", (client) => {
     console.log(`[PeerServer] Peer disconnected: ${client.getId()}`);
   });
 
+  peerServer.on("error", (err) => {
+    console.error("[PeerServer] Error:", err);
+  });
+
+  // Now load Express app and attach PeerServer to it
+  const app = require("./app");
+  
+  // Mount PeerServer as middleware BEFORE static files
+  // This ensures /peer/* routes are handled by PeerServer
+  app.use(peerServer);
+
+  // Attach Express app as the request handler for the HTTP server
+  server.on("request", app);
+
   server.listen(PORT, () => {
-    console.log(`[Server] Listening on port ${PORT}`);
-    console.log(`[Server] PeerJS server at /${process.env.PEER_PATH || "peer"}`);
-    console.log(`[Server] API base at /api`);
+    console.log(`\n[Server] ✅ Server listening on port ${PORT}`);
+    console.log(`[Server] 🔗 PeerJS server: wss://yourhost${peerPath}`);
+    console.log(`[Server] 📡 API base: /api`);
+    console.log(`[Server] 🌐 UI: https://yourhost\n`);
   });
 })();
