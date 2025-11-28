@@ -12,25 +12,23 @@ app.use(cors());
 app.use(express.json());
 app.use(rateLimiter);
 
-// API routes (highest priority - must match before fallback)
+// API routes
 app.use("/api/peers", peerRoutes);
 
 // health check
 app.get("/health", (req, res) => res.json({ ok: true }));
 
-// PeerServer middleware will be added here in server.js before static files
-// (This prevents SPA fallback from intercepting /peer routes)
-
 // Serve React static files
 const clientBuildPath = path.join(__dirname, "../client/build");
 app.use(express.static(clientBuildPath));
 
-// Fallback: serve index.html for all other routes (SPA support)
+// Fallback: serve index.html for SPA (catch-all)
+// NOTE: /peer/* requests are handled by PeerServer mounted on HTTP server in server.js
 app.get("*", (req, res) => {
   res.sendFile(path.join(clientBuildPath, "index.html"));
 });
 
-// error handler last
+// error handler
 app.use(errorHandler);
 
 module.exports = app;

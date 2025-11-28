@@ -1,5 +1,6 @@
 require("dotenv").config();
 const http = require("http");
+const app = require("./app");
 const connectDB = require("./config/db");
 const { createPeerServer } = require("./config/peerServer");
 
@@ -22,21 +23,15 @@ const PORT = process.env.PORT || 5000;
     process.exit(1);
   }
 
-  // create HTTP server
-  const server = http.createServer();
+  // create HTTP server from express app
+  const server = http.createServer(app);
 
-  // mount PeerJS signaling server on HTTP server
+  // mount PeerJS signaling server on the same HTTP server
+  // ExpressPeerServer auto-handles the /peer path
   const peerServer = createPeerServer(server, {
     path: process.env.PEER_PATH || "/peer",
     debug: !!process.env.PEER_DEBUG
   });
-
-  // Load Express app and attach PeerServer as middleware
-  const app = require("./app");
-  app.use(peerServer);
-  
-  // attach Express app to HTTP server
-  server.on("request", app);
 
   server.listen(PORT, () => {
     console.log(`[Server] Listening on http://localhost:${PORT}`);
