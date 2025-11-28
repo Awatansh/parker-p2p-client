@@ -10,17 +10,34 @@ export default function PeerManager() {
 
   async function init() {
     return new Promise((resolve, reject) => {
-      // Production config with environment variables
+      // Production config: connect to current origin (same domain to avoid CORS)
+      // For local dev: use localhost:9000
+      // For production: use current window.location.host
+      let host, port, secure;
+      
+      if (process.env.NODE_ENV === "production" && typeof window !== "undefined") {
+        // Production: use same domain to avoid CORS issues
+        host = window.location.hostname;
+        port = 443;
+        secure = true;
+      } else {
+        // Development: use localhost
+        host = process.env.REACT_APP_PEER_HOST || "localhost";
+        port = parseInt(process.env.REACT_APP_PEER_PORT || "9000");
+        secure = process.env.REACT_APP_PEER_SECURE === "true" || false;
+      }
+
       const peerConfig = {
-        host: process.env.REACT_APP_PEER_HOST || "parker-app.onrender.com",
-        port: parseInt(process.env.REACT_APP_PEER_PORT || "443"),
+        host,
+        port,
         path: process.env.REACT_APP_PEER_PATH || "/peer",
-        secure: process.env.REACT_APP_PEER_SECURE === "true" || true,
+        secure,
         debug: 2,
       };
 
       console.log("[PeerManager] Initializing with config:", peerConfig);
       console.log("[PeerManager] Environment:", process.env.NODE_ENV);
+      console.log("[PeerManager] Origin:", typeof window !== "undefined" ? window.location.origin : "N/A");
 
       peer = new Peer(undefined, peerConfig);
 
