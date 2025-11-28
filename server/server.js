@@ -2,6 +2,7 @@ require("dotenv").config();
 const http = require("http");
 const connectDB = require("./config/db");
 const { ExpressPeerServer } = require("peer");
+const { createApp, addSPAFallback } = require("./app");
 
 const PORT = process.env.PORT || 5000;
 
@@ -22,10 +23,13 @@ const PORT = process.env.PORT || 5000;
     process.exit(1);
   }
 
-  // Create HTTP server (we'll add Express to it in a moment)
-  const server = http.createServer();
+  // Create Express app (WITHOUT the SPA fallback yet)
+  const app = createApp();
 
-  // Create and configure PeerServer first
+  // Create HTTP server
+  const server = http.createServer(app);
+
+  // Create PeerServer on the HTTP server
   const peerPath = process.env.PEER_PATH || "/peer";
   console.log("[Server] Setting up PeerJS at path: " + peerPath);
 
@@ -42,6 +46,12 @@ const PORT = process.env.PORT || 5000;
     }
   });
 
+  // Mount PeerServer as middleware BEFORE SPA fallback
+  app.use(peerServer);
+
+  // NOW add the SPA fallback (it will be the last route, after PeerServer)
+  addSPAFallback(app);
+
   // Log peer events
   peerServer.on("connection", (client) => {
     console.log(`[PeerServer] ✅ Peer connected: ${client.getId()}`);
@@ -55,20 +65,9 @@ const PORT = process.env.PORT || 5000;
     console.error("[PeerServer] Error:", err);
   });
 
-  // Now load Express app and attach PeerServer to it
-  const app = require("./app");
-  
-  // Mount PeerServer as middleware BEFORE static files
-  // This ensures /peer/* routes are handled by PeerServer
-  app.use(peerServer);
-
-  // Attach Express app as the request handler for the HTTP server
-  server.on("request", app);
-
   server.listen(PORT, () => {
     console.log(`\n[Server] ✅ Server listening on port ${PORT}`);
-    console.log(`[Server] 🔗 PeerJS server: wss://yourhost${peerPath}`);
-    console.log(`[Server] 📡 API base: /api`);
-    console.log(`[Server] 🌐 UI: https://yourhost\n`);
+    console.log(`[Server] 🔗 PeerJS server: ${peerPath}`);
+    console.log(`[Server] 📡 API base: /api\n`);
   });
 })();
