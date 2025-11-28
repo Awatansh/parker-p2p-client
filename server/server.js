@@ -1,6 +1,5 @@
 require("dotenv").config();
 const http = require("http");
-const app = require("./app");
 const connectDB = require("./config/db");
 const { createPeerServer } = require("./config/peerServer");
 
@@ -23,15 +22,18 @@ const PORT = process.env.PORT || 5000;
     process.exit(1);
   }
 
-  // create HTTP server from express app
-  const server = http.createServer(app);
+  // create HTTP server
+  const server = http.createServer();
 
-  // mount PeerJS signaling server
+  // mount PeerJS signaling server FIRST (before Express app)
   const peerServer = createPeerServer(server, {
     path: process.env.PEER_PATH || "/peer",
     debug: !!process.env.PEER_DEBUG
   });
-  app.use(peerServer);
+
+  // NOW load Express app (which includes static files and SPA fallback)
+  const app = require("./app");
+  server.on("request", app);
 
   server.listen(PORT, () => {
     console.log(`[Server] Listening on http://localhost:${PORT}`);
