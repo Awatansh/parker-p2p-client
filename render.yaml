@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: parker
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: bash build.sh
+    startCommand: node server/server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: PEER_PATH
+        value: /peer
+      - key: PEER_DEBUG
+        value: "false"
+      - key: CORS_ORIGIN
+        sync: false
