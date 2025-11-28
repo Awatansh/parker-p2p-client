@@ -19,6 +19,4 @@ npm install
 echo "🔨 Building React client..."
 npm run build
 
-cd ..
-
 echo "✅ Build complete!"

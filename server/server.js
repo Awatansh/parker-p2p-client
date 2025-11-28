@@ -2,7 +2,7 @@ require("dotenv").config();
 const http = require("http");
 const app = require("./app");
 const connectDB = require("./config/db");
-const { createPeerServer } = require("./config/peerServer");
+const { ExpressPeerServer } = require("peer");
 
 const PORT = process.env.PORT || 5000;
 
@@ -26,21 +26,33 @@ const PORT = process.env.PORT || 5000;
   // create HTTP server from express app
   const server = http.createServer(app);
 
-  // mount PeerJS signaling server on the same HTTP server
-  const peerServer = createPeerServer(server, {
+  // mount PeerJS signaling server directly on HTTP server
+  // ExpressPeerServer handles both HTTP and WebSocket on the specified path
+  const peerServer = ExpressPeerServer(server, {
     path: process.env.PEER_PATH || "/peer",
-    debug: !!process.env.PEER_DEBUG
+    debug: !!process.env.PEER_DEBUG,
+    allow_discovery: true,
+    proxied: true, // Critical for Render (behind reverse proxy)
+    cors: {
+      origin: true,
+      credentials: true,
+      methods: ["GET", "POST", "OPTIONS"],
+      allowedHeaders: ["Content-Type"],
+    }
   });
 
-  // Handle WebSocket upgrade events for PeerServer
-  server.on("upgrade", (request, socket, head) => {
-    console.log("[Server] WebSocket upgrade request for:", request.url);
-    peerServer.handleUpgrade(request, socket, head);
+  // Log peer events
+  peerServer.on("connection", (client) => {
+    console.log(`[PeerServer] Peer connected: ${client.getId()}`);
+  });
+
+  peerServer.on("disconnect", (client) => {
+    console.log(`[PeerServer] Peer disconnected: ${client.getId()}`);
   });
 
   server.listen(PORT, () => {
-    console.log(`[Server] Listening on http://localhost:${PORT}`);
-    console.log(`[Server] PeerJS server at http://localhost:${PORT}/peer`);
-    console.log(`[Server] API base at http://localhost:${PORT}/api`);
+    console.log(`[Server] Listening on port ${PORT}`);
+    console.log(`[Server] PeerJS server at /${process.env.PEER_PATH || "peer"}`);
+    console.log(`[Server] API base at /api`);
   });
 })();
