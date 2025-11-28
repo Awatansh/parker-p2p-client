@@ -1,5 +1,9 @@
 # Parker (P2P File Sharing - Napster Clone)
-
+## Group - 16 Distributed Systems Project
+### 231020416 - AVIJEET PARTH SONI
+### 231020417 - AWATANSH SINGH
+### 2310202418 - AYUSH DEEP
+### 231020421 - DEVASMITA MAJHI
 A decentralized peer-to-peer file sharing application using WebRTC (PeerJS) for data transfer and Express.js backend for peer discovery and file indexing.
 
 ## Quick Start
