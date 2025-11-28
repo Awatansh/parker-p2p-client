@@ -46,7 +46,10 @@ export default function ResultsList() {
       {searchResults.map((r) => (
         <div key={r.peerId} className="result-card">
           <div className="result-header">
-            <div className="result-peer-name">👤 {r.username}</div>
+            <div>
+              <div className="result-peer-name">👤 {r.username}</div>
+              <div className="result-peer-id" title={r.peerId}>Peer: {r.peerId.slice(0, 8)}...</div>
+            </div>
             <div className="result-file-count">{r.files.length} file{r.files.length !== 1 ? "s" : ""}</div>
           </div>
           <div className="result-files">
